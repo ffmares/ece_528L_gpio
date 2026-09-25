@@ -342,4 +342,50 @@ void LED_Pattern_2(void);
  */
 void LED_Controller(uint8_t button_status, uint8_t switch_status);
 
+
+/**
+ * @brief The LED_Pattern_1 function has been edited to match the desired results given from the GPIO lab due Oct 1.
+ *
+ * @param button_status An 8-bit unsigned integer representing the status of the user buttons. This value is used to determine
+ *                      the LED pattern in some cases.
+ *
+ * This function's characteristics:
+ *                  when B1 is pressed and B2 is not pressed:
+ *                  LED 1 - ON
+ *                  REG LED(LED 2) - OFF
+ *                  PMOD 8LD (0, 2, 4, 6) - ON
+ *
+ *                  when B1 is not pressed and B2 is pressed:
+ *                  LED 1 - OFF
+ *                  REG LED(LED 2) - BLUE
+ *                  PMOD 8LD (1, 3, 5, 7) - ON
+ *
+ *                  when B1 and B2 is pressed
+ *                  LED 1 - Toggle
+ *                  LED 2 - GREEN, Toggle
+ *                  PMOD 8LD (0-7) - OFF
+ *
+ *                  when B1 and B2 are NOT pressed:
+ *                  LED 1 - OFF
+ *                  REG LED(LED 2) - OFF
+ *                  PMOD 8LD (0-7) - ON
+ * @return None
+ */
+void LED_Pattern_1(uint8_t button_status);
+
+/**
+ * LED_Pattern_3
+ */
+void LED_Pattern_3(void);
+
+/**
+ *
+ */
+void LED_Pattern_4(void);
+
+void LED_Pattern_5(void);
+
+void Johnson_Counter(void);
+
+
 #endif /* INC_GPIO_H_ */

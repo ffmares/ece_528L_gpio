@@ -45,6 +45,8 @@ const uint8_t PMOD_8LD_ALL_OFF      =   0x00;
 const uint8_t PMOD_8LD_ALL_ON       =   0xFF;
 const uint8_t PMOD_8LD_0_3_ON       =   0x0F;
 const uint8_t PMOD_8LD_4_7_ON       =   0xF0;
+const uint8_t PMOD_8LD_0_2_4_6_ON   =   0X55; // Added by feranmi
+const uint8_t PMOD_8LD_1_3_5_7_ON   =   0xAA; // Added by feranmi
 
 void LED1_Init(void)
 {
@@ -93,7 +95,7 @@ void Buttons_Init(void)
 {
     P1->SEL0 &= ~0x12;
     P1->SEL1 &= ~0x12;
-    P1->DIR |= ~0x12;
+    P1->DIR &= ~0x12;
     P1->REN |= 0x12;
     P1->OUT |= 0x12;
 }
@@ -133,50 +135,6 @@ uint8_t Get_PMOD_SWT_Status(void)
     return switch_status;
 }
 
-void LED_Pattern_1(uint8_t button_status)
-{
-    switch(button_status)
-    {
-        // Button 1 and Button 2 are pressed
-        case 0x00:
-        {
-            LED1_Output(RED_LED_ON);
-            LED2_Output(RGB_LED_GREEN);
-            PMOD_8LD_Output(PMOD_8LD_ALL_ON);
-            break;
-        }
-
-        // Button 1 is pressed
-        // Button 2 is not pressed
-        case 0x10:
-        {
-            LED1_Output(RED_LED_ON);
-            LED2_Output(RGB_LED_OFF);
-            PMOD_8LD_Output(PMOD_8LD_0_3_ON);
-            break;
-        }
-
-        // Button 1 is not pressed
-        // Button 2 is pressed
-        case 0x02:
-        {
-            LED1_Output(RED_LED_OFF);
-            LED2_Output(RGB_LED_GREEN);
-            PMOD_8LD_Output(PMOD_8LD_4_7_ON);
-            break;
-        }
-
-        // Button 1 and Button 2 are not pressed
-        case 0x12:
-        {
-            LED1_Output(RED_LED_OFF);
-            LED2_Output(RGB_LED_OFF);
-            PMOD_8LD_Output(PMOD_8LD_ALL_OFF);
-            break;
-        }
-    }
-}
-
 void LED_Pattern_2(void)
 {
     LED1_Output(RED_LED_ON);
@@ -185,11 +143,94 @@ void LED_Pattern_2(void)
     for (int led_count = 0; led_count <= 0xFF; led_count++)
     {
         PMOD_8LD_Output(led_count);
-        Clock_Delay1ms(100);
+        Clock_Delay1ms(180);
         uint8_t switch_status = Get_PMOD_SWT_Status();
         if (switch_status != 0x01)
         {
             break;
+        }
+    }
+}
+
+// LED Pattern 3: binary down counter, selected by SWT2.
+void LED_Pattern_3(void)
+{
+    LED1_Output(RED_LED_ON);
+    LED2_Output(RGB_LED_BLUE);
+
+    while (Get_PMOD_SWT_Status() == 0x02)
+    {
+        for (int count = 0xFF; count >= 0; count--)
+        {
+            if (Get_PMOD_SWT_Status() != 0x02)
+            {
+                return;
+            }
+            PMOD_8LD_Output((uint8_t)count);
+            Clock_Delay1ms(100);
+        }
+    }
+}
+
+// LED Pattern 4: forward ring counter, selected by SWT3.
+void LED_Pattern_4(void)
+{
+    LED1_Output(RED_LED_OFF);
+    LED2_Output(RGB_LED_OFF);
+
+    while (Get_PMOD_SWT_Status() == 0x04)
+    {
+        for (uint8_t pattern = 0x01; pattern != 0; pattern <<= 1)
+        {
+            if (Get_PMOD_SWT_Status() != 0x04)
+            {
+                return;
+            }
+            PMOD_8LD_Output(pattern);
+            Clock_Delay1ms(200);
+        }
+    }
+}
+
+// LED Pattern 5: reverse ring counter, selected by SWT4.
+void LED_Pattern_5(void)
+{
+    LED1_Output(RED_LED_OFF);
+    LED2_Output(RGB_LED_OFF);
+
+    while (Get_PMOD_SWT_Status() == 0x08)
+    {
+        for (uint8_t pattern = 0x80; pattern != 0; pattern >>= 1)
+        {
+            if (Get_PMOD_SWT_Status() != 0x08)
+            {
+                return;
+            }
+            PMOD_8LD_Output(pattern);
+            Clock_Delay1ms(200);
+        }
+    }
+}
+
+// Johnson Counter
+// Selected when SWT0 and SWT1 are enabled (switch status 0x03).
+void Johnson_Counter(void)
+{
+    LED1_Output(RED_LED_ON);
+    LED2_Output(RGB_LED_GREEN);
+
+    while (Get_PMOD_SWT_Status() == 0x03)
+    {
+        uint8_t pattern = 0x00;
+        for (uint8_t count = 0; count < 16; count++)
+        {
+            if (Get_PMOD_SWT_Status() != 0x03)
+            {
+                return;
+            }
+            PMOD_8LD_Output(pattern);
+            Clock_Delay1ms(200);
+            pattern = (uint8_t)((pattern << 1) | ((~pattern >> 7) & 0x01));
         }
     }
 }
@@ -210,9 +251,72 @@ void LED_Controller(uint8_t button_status, uint8_t switch_status)
         }
         break;
 
+        case 0x02:
+        {
+            LED_Pattern_3();
+        }
+        break;
+
+        // SWT0 and SWT1 enabled.
+        case 0x03:
+        {
+            Johnson_Counter();
+        }
+        break;
+
+        case 0x04: // SWT3 only
+        {
+            LED_Pattern_4();
+        }
+        break;
+
+        case 0x08: // SWT4 only
+        {
+            LED_Pattern_5();
+        }
+        break;
+
         default:
         {
             LED_Pattern_1(button_status);
         }
+
+    }
+}
+// task 1- feranmi
+void LED_Pattern_1(uint8_t button_status){
+    switch(button_status){
+    case 0x00:          // B1 and B2 are pressed
+    {
+        LED1_Output(LED1_Status() ^ RED_LED_ON);
+        LED2_Toggle(RGB_LED_GREEN);
+        PMOD_8LD_Output(PMOD_8LD_ALL_OFF);
+        Clock_Delay1ms(1000);
+        break;
+    }
+
+    case 0x10:          // B1 is pressed, B2 is not pressed
+    {
+        LED1_Output(RED_LED_ON);
+        LED2_Output(RGB_LED_OFF);
+        PMOD_8LD_Output(PMOD_8LD_0_2_4_6_ON);
+        break;
+    }
+
+    case 0x02:          // B1 is not pressed, B2 is pressed
+    {
+        LED1_Output(RED_LED_OFF);
+        LED2_Output(RGB_LED_BLUE);
+        PMOD_8LD_Output(PMOD_8LD_1_3_5_7_ON);
+        break;
+    }
+
+    case 0x12:          // B2 is not pressed, B2 is not pressed
+    {
+        LED1_Output(RED_LED_OFF);
+        LED2_Output(RGB_LED_OFF);
+        PMOD_8LD_Output(PMOD_8LD_ALL_ON);
+        break;
+    }
     }
 }

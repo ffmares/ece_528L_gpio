@@ -237,10 +237,16 @@ int EUSCI_A0_UART_Close(int dev_fd)
 int EUSCI_A0_UART_Read(int dev_fd, char *buf, unsigned count)
 {
     char ch;
+
+    if (count == 0)
+    {
+        return 0;
+    }
+
     // Receive char from the serial terminal
     ch = EUSCI_A0_UART_InChar();
     // Return by reference
-    ch = *buf;
+    *buf = ch;
     // Output the received char from the serial terminal
     EUSCI_A0_UART_OutChar(ch);
     return 1;
