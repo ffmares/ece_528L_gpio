@@ -375,16 +375,34 @@ void LED_Pattern_1(uint8_t button_status);
 
 /**
  * LED_Pattern_3
+ * LED Pattern 3 functions as a Binary Down counter. The counter takes no arguments and performs a binary
+ * down counter on the PMOD 8LD. This function only turns on as SWT2 is enabled. The RGB LED is turned on at the same time.
+ * @return None
  */
 void LED_Pattern_3(void);
 
 /**
- *
+ * LED_Pattern_4
+ * LED Pattern 4 functions as a ring counter. The counter is displayed using the 8LD PMOD.
+ * This function is on as SWT3 is on, solely. LED1 and the RGB LED is turned off during the entire duration of pattern 4.
+ * @return None
  */
 void LED_Pattern_4(void);
 
+/**
+ * LED_Pattern_5
+ * LED Pattern 5 functions as a reverse ring counter. The counter is displayed using the 8LD PMOD.
+ * This function is on as SWT4 is on, solely. LED1 and the RGB LED is turned off during the entire duration of pattern 4.
+ * @return None
+ */
 void LED_Pattern_5(void);
 
+/*
+ * Johnson Counter
+ * The Johnson Counter is the johnson counter. The counter is displayed using the 8LD PMOD.
+ * This function turns on when SW1 and SW2 is on. LED1 is on and the RGB LED is green during the entire duration of pattern 4.
+ * @return None
+ */
 void Johnson_Counter(void);
 
 
